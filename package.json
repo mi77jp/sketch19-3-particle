@@ -1,0 +1,26 @@
+{
+  "name": "sketch19-3-particle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./app/index.js",
+  "scripts": {
+    "dev": "parcel ./src/index.html",
+    "build": "parcel build ./src/index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mi77jp/sketch19-3-particle.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mi77jp/sketch19-3-particle/issues"
+  },
+  "homepage": "https://github.com/mi77jp/sketch19-3-particle#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "parcel-bundler": "^1.12.4",
+    "sass": "^1.23.3"
+  }
+}
