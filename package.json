@@ -5,7 +5,8 @@
   "main": "./app/index.js",
   "scripts": {
     "dev": "parcel ./src/index.html",
-    "build": "parcel build ./src/index.html"
+    "build": "parcel build ./src/index.html",
+    "deploy": "gh-pages -d dist"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,7 @@
   "homepage": "https://github.com/mi77jp/sketch19-3-particle#readme",
   "dependencies": {},
   "devDependencies": {
+    "gh-pages": "^2.1.1",
     "parcel-bundler": "^1.12.4",
     "sass": "^1.23.3"
   }
