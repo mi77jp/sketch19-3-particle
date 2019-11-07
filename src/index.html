@@ -1,7 +1,26 @@
+<!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8">
+    <title></title>
+  </head>
   <body>
-    <h1>Parcel</h1>
-    <div class="parcel"></div>
+    <div class="mode-buttons">
+      <a href="#?mode=0">MODE.0</a>
+      <a href="#?mode=1">MODE.1</a>
+      <a href="#?mode=2">MODE.2</a>
+      <a href="#?mode=3">MODE.3</a>
+    </div>
+
+    <div class="content">
+      <div class="wrapper" id="wrapper"></div>
+      <div class="img-wrapper" >
+        <img id="photo" src="lena.png" alt="">
+      </div>
+    </div>
+
+    <canvas id="canvas1" width="80" height="60"></canvas>
+
     <script src="./js/index.js"></script>
   </body>
 </html>
