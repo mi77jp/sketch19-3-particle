@@ -220,6 +220,10 @@ const OrbitControls = controls.default(THREE);
     requestAnimationFrame( run );
   }
 
+  function setParticleState() {
+
+  }
+
   function getParam(name, url) {
     if (!url) url = window.location.href;
     name = name.replace(/[\[\]]/g, "\\$&");
