@@ -117,79 +117,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"../node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
-
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
-  }
-
-  return bundleURL;
-}
-
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
-
-    if (matches) {
-      return getBaseURL(matches[0]);
-    }
-  }
-
-  return '/';
-}
-
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"../node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-
-var cssTimeout = null;
-
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
-  }
-
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
-      }
-    }
-
-    cssTimeout = null;
-  }, 50);
-}
-
-module.exports = reloadCSS;
-},{"./bundle-url":"../node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"scss/style.scss":[function(require,module,exports) {
-var reloadCSS = require('_css_loader');
-
-module.hot.dispose(reloadCSS);
-module.hot.accept(reloadCSS);
-},{"_css_loader":"../node_modules/parcel-bundler/src/builtins/css-loader.js"}],"../node_modules/three/build/three.module.js":[function(require,module,exports) {
+})({"../node_modules/three/build/three.module.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -35886,10 +35814,8 @@ module.exports = function( THREE ) {
 	return OrbitControls;
 };
 
-},{}],"js/particles.js":[function(require,module,exports) {
+},{}],"js/index.js":[function(require,module,exports) {
 "use strict";
-
-require("../scss/style.scss");
 
 var THREE = _interopRequireWildcard(require("three"));
 
@@ -35899,76 +35825,192 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var OrbitControls = controls.default(THREE);
+//import '../scss/style.scss';
+var OrbitControls = controls.default(THREE); //import add from './modules/add';
 
 (function () {
-  // 1. Scene
-  var scene = new THREE.Scene(); // 2. Camera
+  var letter = getParam('letter');
+  var filePath = document.getElementById('photo').getAttribute('src'); //'color.png';
 
-  var camera = new THREE.PerspectiveCamera(90, 1); // (視野角, アスペクト比, near, far)
+  var basePosition = [0, 0, 0];
+  var gridSize = 10;
+  var animSeed = {
+    circ: 0,
+    circMax: 360
+  };
+  var scene, camera, renderer;
+  var material, floor;
+  var directionalLight, ambientLight;
+  var boxes;
 
-  camera.position.z = 1500; // 7. Renderer
+  function initialize() {
+    getImageData(initThreeObjects);
+  }
 
-  var renderer = new THREE.WebGLRenderer();
-  renderer.setSize(800, //window.innerWidth,
-  800 //window.innerHeight
-  );
-  renderer.shadowMap.enabled = true; // 8. Append objects to DOM
+  function getImageData(callback) {
+    var imageMatrix = [];
+    var cvs = document.getElementById('canvas1');
+    var ctx = cvs.getContext('2d');
+    var img = new Image();
+    img.src = filePath;
 
-  document.getElementById('wrapper').appendChild(renderer.domElement); // 9. Controls
+    img.onload = function () {
+      ctx.drawImage(img, 0, 0, 80, 60);
+      var imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
+      var width = imageData.width;
+      var height = imageData.height;
+      var pixels = imageData.data; // ピクセル配列：RGBA4要素で1ピクセル
 
-  var controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.25;
-  controls.enableZoom = false; // 10. Particles
+      for (var y = 0; y < height; ++y) {
+        imageMatrix[y] = [];
 
-  var geometry = new THREE.Geometry();
-  var SIZE = 2000; // 配置する範囲
-
-  var LENGTH = 1000; // 配置する個数
-
-  var material = new THREE.PointsMaterial({
-    size: 8,
-    color: 0xFFFFFF
-  });
-  var mesh = new THREE.Points(geometry, material);
-  scene.add(mesh);
-  var randomVertices = [];
-
-  for (var i = 0; i < LENGTH; i++) {
-    randomVertices[i] = new THREE.Vector3(SIZE * (Math.random() - 0.5), SIZE * (Math.random() - 0.5), SIZE * (Math.random() - 0.5));
-    geometry.vertices[i] = randomVertices[i];
-  } // 11. Run the world
-
-
-  requestAnimationFrame(run);
-
-  function run() {
-    geometry.verticesNeedUpdate = true;
-
-    for (var _i = 0; _i < LENGTH; _i++) {
-      var targetVector = void 0;
-      var particleVector = void 0;
-
-      switch (getParam('mode')) {
-        case 'spiral':
-          var circleSize = LENGTH / 10;
-          targetVector = new THREE.Vector3(SIZE / 4 * Math.cos(_i * circleSize), SIZE / 4 * Math.sin(_i * circleSize), SIZE * (_i / LENGTH - 0.5));
-          break;
-
-        default:
-          targetVector = randomVertices[_i];
-          break;
+        for (var x = 0; x < width; ++x) {
+          var base = (y * width + x) * 4;
+          imageMatrix[y][x] = {
+            r: imageData.data[base + 0],
+            g: imageData.data[base + 1],
+            b: imageData.data[base + 2],
+            a: imageData.data[base + 3]
+          };
+        }
       }
 
-      var shiftCoefficient = 28;
-      particleVector = new THREE.Vector3(geometry.vertices[_i].x + (targetVector.x - geometry.vertices[_i].x) / shiftCoefficient, geometry.vertices[_i].y + (targetVector.y - geometry.vertices[_i].y) / shiftCoefficient, geometry.vertices[_i].z + (targetVector.z - geometry.vertices[_i].z) / shiftCoefficient);
-      geometry.vertices[_i] = particleVector;
-    }
+      callback(imageMatrix);
+    };
+  }
+  /* NOTE: [ hierarchy image ]
+    renderer.domElement
+      - Scene
+        - Camera
+        - Light
+        - Mesh (Geometry, Material)
+  */
 
-    renderer.render(scene, camera);
+
+  function initThreeObjects(imageMatrix) {
+    // 1. Scene
+    scene = new THREE.Scene(); // 2. Camera
+
+    camera = new THREE.PerspectiveCamera(90, 1, 1, 2400); // (視野角, アスペクト比, near, far)
+
+    camera.position.z = 500; // 3. Floor
+
+    floor = new THREE.GridHelper(10000, 80);
+    floor.material.color = new THREE.Color(0x999999);
+    floor.position.set(0, -300, 0);
+    scene.add(floor); // 4. Materials
+
+    material = new THREE.MeshBasicMaterial({
+      color: 0x999999,
+      wireframe: true
+    }); // 6. Lights
+
+    ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    scene.add(ambientLight);
+    directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    directionalLight.position.set(-1000, 1000, 0);
+    scene.add(directionalLight); // 7. Renderer
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(800, //window.innerWidth,
+    800 //window.innerHeight
+    );
+    renderer.shadowMap.enabled = true; // 8. Append objects to DOM
+
+    document.getElementById('wrapper').appendChild(renderer.domElement); // 9. Color
+
+    boxes = [];
+
+    for (var y = 0; y < imageMatrix.length; ++y) {
+      boxes[y] = [];
+
+      for (var x = 0; x < imageMatrix[y].length; ++x) {
+        boxes[y][x] = [];
+        boxes[y][x].layers = {
+          r: {},
+          g: {},
+          b: {}
+        }; // R
+
+        boxes[y][x].layers.r.geometry = new THREE.BoxGeometry(gridSize, gridSize, gridSize);
+        boxes[y][x].layers.r.material = new THREE.MeshBasicMaterial({
+          color: new THREE.Color(imageMatrix[y][x].r / 255, 0, 0),
+          blending: THREE.AdditiveBlending
+        });
+        boxes[y][x].layers.r.mesh = new THREE.Mesh(boxes[y][x].layers.r.geometry, boxes[y][x].layers.r.material);
+        scene.add(boxes[y][x].layers.r.mesh); // G
+
+        boxes[y][x].layers.g.geometry = new THREE.BoxGeometry(gridSize, gridSize, gridSize);
+        boxes[y][x].layers.g.material = new THREE.MeshBasicMaterial({
+          color: new THREE.Color(0, imageMatrix[y][x].g / 255, 0),
+          blending: THREE.AdditiveBlending
+        });
+        boxes[y][x].layers.g.mesh = new THREE.Mesh(boxes[y][x].layers.g.geometry, boxes[y][x].layers.g.material);
+        scene.add(boxes[y][x].layers.g.mesh); // B
+
+        boxes[y][x].layers.b.geometry = new THREE.BoxGeometry(gridSize, gridSize, gridSize);
+        boxes[y][x].layers.b.material = new THREE.MeshBasicMaterial({
+          color: new THREE.Color(0, 0, imageMatrix[y][x].b / 255),
+          blending: THREE.AdditiveBlending
+        });
+        boxes[y][x].layers.b.mesh = new THREE.Mesh(boxes[y][x].layers.b.geometry, boxes[y][x].layers.b.material);
+        scene.add(boxes[y][x].layers.b.mesh);
+      }
+    } // 9. Controls
+
+
+    var controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = false; // 10. Run the world
+
     requestAnimationFrame(run);
   }
+
+  function run() {
+    renderer.render(scene, camera); //
+
+    animSeed.circ += 0.02;
+    if (animSeed.circ > animSeed.circMax) animSeed.circ = 0;
+    var dotIndexGap;
+
+    for (var y = 0; y < boxes.length; ++y) {
+      for (var x = 0; x < boxes[y].length; ++x) {
+        if (getParam('mode') == 1) {
+          // R
+          boxes[y][x].layers.r.mesh.position.set(basePosition[0] + gridSize * (boxes[y].length / -2 + x), basePosition[1] - gridSize * (boxes.length / -2 + y), basePosition[2] + gridSize * Math.sin(animSeed.circ) * 4); // G
+
+          boxes[y][x].layers.g.mesh.position.set(basePosition[0] + gridSize * (boxes[y].length / -2 + x), basePosition[1] - gridSize * (boxes.length / -2 + y), basePosition[2] - gridSize * Math.cos(animSeed.circ) * 4);
+        } else if (getParam('mode') == 2) {
+          // R
+          boxes[y][x].layers.r.mesh.scale.set(Math.sin(animSeed.circ) * 1.4, Math.sin(animSeed.circ) * 1.4, Math.sin(animSeed.circ) * 1.4); // G
+
+          boxes[y][x].layers.g.mesh.scale.set(Math.cos(animSeed.circ) * 1.4, Math.cos(animSeed.circ) * 1.4, Math.cos(animSeed.circ) * 1.4);
+        } else if (getParam('mode') == 3) {
+          dotIndexGap = (y * boxes.length + x) / boxes.length * boxes[y].length; // ratio
+          // G
+
+          boxes[y][x].layers.g.mesh.position.set(basePosition[0] + gridSize * (boxes[y].length / -2 + x), basePosition[1] - gridSize * (boxes.length / -2 + y), basePosition[2] + gridSize * Math.sin(animSeed.circ * dotIndexGap / Math.PI + 180) * 2); // B
+
+          boxes[y][x].layers.b.mesh.position.set(basePosition[0] + gridSize * (boxes[y].length / -2 + x), basePosition[1] - gridSize * (boxes.length / -2 + y), basePosition[2] + gridSize * Math.sin(animSeed.circ * dotIndexGap / Math.PI) * 2);
+        } else {
+          // R
+          boxes[y][x].layers.r.mesh.scale.set(1, 1, 1);
+          boxes[y][x].layers.r.mesh.position.set(basePosition[0] + gridSize * (boxes[y].length / -2 + x), basePosition[1] - gridSize * (boxes.length / -2 + y), basePosition[2] - gridSize * 2); // G
+
+          boxes[y][x].layers.g.mesh.scale.set(1, 1, 1);
+          boxes[y][x].layers.g.mesh.position.set(basePosition[0] + gridSize * (boxes[y].length / -2 + x), basePosition[1] - gridSize * (boxes.length / -2 + y), basePosition[2] - gridSize * 1); // B
+
+          boxes[y][x].layers.b.mesh.scale.set(1, 1, 1);
+          boxes[y][x].layers.b.mesh.position.set(basePosition[0] + gridSize * (boxes[y].length / -2 + x), basePosition[1] - gridSize * (boxes.length / -2 + y), basePosition[2] - gridSize * 0);
+        }
+      }
+    }
+
+    requestAnimationFrame(run);
+  }
+
+  function setParticleState() {}
 
   function getParam(name, url) {
     if (!url) url = window.location.href;
@@ -35979,8 +36021,10 @@ var OrbitControls = controls.default(THREE);
     if (!results[2]) return '';
     return decodeURIComponent(results[2].replace(/\+/g, " "));
   }
+
+  initialize();
 })();
-},{"../scss/style.scss":"scss/style.scss","three":"../node_modules/three/build/three.module.js","three-orbit-controls":"../node_modules/three-orbit-controls/index.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"three":"../node_modules/three/build/three.module.js","three-orbit-controls":"../node_modules/three-orbit-controls/index.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -36184,5 +36228,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../node_modules/parcel-bundler/src/builtins/hmr-runtime.js","js/particles.js"], null)
-//# sourceMappingURL=/particles.c7cea895.js.map
+},{}]},{},["../node_modules/parcel-bundler/src/builtins/hmr-runtime.js","js/index.js"], null)
+//# sourceMappingURL=/js.00a46daa.js.map

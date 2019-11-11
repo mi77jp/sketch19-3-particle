@@ -9,8 +9,8 @@ const OrbitControls = controls.default(THREE);
   const scene = new THREE.Scene();
 
   // 2. Camera
-  const camera = new THREE.PerspectiveCamera(50, 1);// (視野角, アスペクト比, near, far)
-  //camera.position.z = 1500;
+  const camera = new THREE.PerspectiveCamera(90, 1);// (視野角, アスペクト比, near, far)
+  camera.position.z = 1500;
 
   // 7. Renderer
   const renderer = new THREE.WebGLRenderer();
@@ -31,29 +31,68 @@ const OrbitControls = controls.default(THREE);
 
   // 10. Particles
   const geometry = new THREE.Geometry();
-  const SIZE = 1000;// 配置する範囲
-  const LENGTH = 5000;// 配置する個数
-  for (let i = 0; i < LENGTH; i++) {
-    geometry.vertices.push(new THREE.Vector3(
-      SIZE * (Math.random() - 0.5),
-      SIZE * (Math.random() - 0.5),
-      SIZE * (Math.random() - 0.5),
-    ));
-  }
+  const SIZE = 2000;// 配置する範囲
+  const LENGTH = 1000;// 配置する個数
   const material = new THREE.PointsMaterial({
-    size: 5,
+    size: 8,
     color: 0xFFFFFF,
   });
-
   const mesh = new THREE.Points(geometry, material);
   scene.add(mesh);
+
+  const randomVertices = [];
+  for (let i = 0; i < LENGTH; i++) {
+    randomVertices[i] = new THREE.Vector3(
+      SIZE * (Math.random() - 0.5),
+      SIZE * (Math.random() - 0.5),
+      SIZE * (Math.random() - 0.5)
+    );
+    geometry.vertices[i] = randomVertices[i];
+  }
 
   // 11. Run the world
   requestAnimationFrame( run );
 
   function run () {
-    renderer.render(scene, camera);
+    geometry.verticesNeedUpdate = true;
+    for (let i = 0; i < LENGTH; i++) {
+      let targetVector;
+      let particleVector;
+      switch (getParam('mode')) {
 
+        case 'spiral':
+        const circleSize = LENGTH/10;
+        targetVector = new THREE.Vector3(
+          SIZE/4 * (Math.cos(i * circleSize)),
+          SIZE/4 * (Math.sin(i * circleSize)),
+          SIZE * (i/LENGTH - 0.5),
+        );
+        break;
+
+        default:
+          targetVector = randomVertices[i];
+        break;
+      }
+      const shiftCoefficient = 28;
+      particleVector = new THREE.Vector3(
+        geometry.vertices[i].x + (targetVector.x - geometry.vertices[i].x)/shiftCoefficient,
+        geometry.vertices[i].y + (targetVector.y - geometry.vertices[i].y)/shiftCoefficient,
+        geometry.vertices[i].z + (targetVector.z - geometry.vertices[i].z)/shiftCoefficient
+      );
+      geometry.vertices[i] = particleVector;
+    }
+    renderer.render(scene, camera);
+    requestAnimationFrame( run );
+  }
+
+  function getParam(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
   }
 
 })();

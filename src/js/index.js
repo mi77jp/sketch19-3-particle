@@ -1,4 +1,4 @@
-import '../scss/style.scss';
+//import '../scss/style.scss';
 import * as THREE from 'three';
 import * as controls from 'three-orbit-controls';
 const OrbitControls = controls.default(THREE);
