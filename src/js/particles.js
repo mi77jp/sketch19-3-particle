@@ -40,7 +40,10 @@ const OrbitControls = controls.default(THREE);
   const mesh = new THREE.Points(geometry, material);
   scene.add(mesh);
 
+  // 11. Run
   const randomVertices = [];
+  let timer = 0;
+
   for (let i = 0; i < LENGTH; i++) {
     randomVertices[i] = new THREE.Vector3(
       SIZE * (Math.random() - 0.5),
@@ -55,6 +58,8 @@ const OrbitControls = controls.default(THREE);
 
   function run () {
     geometry.verticesNeedUpdate = true;
+    timer ++;
+    //
     for (let i = 0; i < LENGTH; i++) {
       let targetVector;
       let particleVector;
@@ -81,6 +86,12 @@ const OrbitControls = controls.default(THREE);
       );
       geometry.vertices[i] = particleVector;
     }
+    //
+    const radian = timer/2 * Math.PI / 180;
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    camera.position.x = SIZE/2 * Math.cos(radian);
+    camera.position.z = SIZE/2 * Math.sin(radian);
+    //
     renderer.render(scene, camera);
     requestAnimationFrame( run );
   }
